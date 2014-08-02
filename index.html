@@ -1,18 +1,31 @@
 <!doctype html>
 <html>
 	<head>
-		<link rel="stylesheet" href="style.css"/>
+		<link rel="stylesheet" href="css/style.css"/>
 	</head>
 	<body>
+		<div id="commands">
+			<label for="mode">View:</label>
+			<select id="mode">
+				<option value="latest">Latest game</option>
+				<option value="overall">Overall</option>
+			</select>
+		</div>
 
 		<div id="kills-chart" class="chart">&nbsp;</div>
+		<div id="passive-kills-chart" class="chart">&nbsp;</div>
+		<div id="shots-chart" class="chart">&nbsp;</div>
 		<div id="flags-chart" class="chart">&nbsp;</div>
+		<div id="nemeses-chart" class="chart">&nbsp;</div>
+		<div id="pickups-chart" class="chart">&nbsp;</div>
 
-		<script src="jquery-2.1.1.min.js"></script>		
-		<script src="api.js"></script>
-		<script src="script.js"></script>
-		<script type="text/javascript" src="google_jsapi.js"></script>
-    	<script type="text/javascript">
+
+		<script src="js/jquery-2.1.1.min.js"></script>		
+		<script src="js/ui.js"></script>
+		<script src="js/api.js"></script>
+		<script src="js/charts.js"></script>
+		<script src="js/google_jsapi.js"></script>
+    	<script>
     		google.load('visualization', '1.0', {'packages':['corechart']});
     		google.setOnLoadCallback(drawCharts);
     	</script>
