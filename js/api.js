@@ -4,16 +4,26 @@
 	var mongoPort = 27080;
 	var mode = 'latest';
 	var latestGameId = -1;
+	var gamesCount = {};
+	var flagsCount = 20 //There are 19 flags around + "no flag"
 
-	var Api = function() {
-		
+
+	var Api = function() {		
+	};
+
+	Api.prototype.init = function() {
+		var ret = $.Deferred();
+		getLatestGameId().then(countGames).then(function() {
+			ret.resolve();			
+		});
+		return ret;
 	};
 
 	Api.prototype.setMode = function(newMode) {
 		mode = newMode;
 	};
 
-	Api.prototype.getLatestGameId = function() {
+	var getLatestGameId = function() {
 		var self = this;
 		var params = {
 			"sort" : {
@@ -24,7 +34,8 @@
 
 		var ret = $.Deferred();
 		executeGet('/games', 'find', params).done(function(resp) {					
-			latestGameId = resp.results[0].start;								
+			latestGameId = resp.results[0].start;	
+
 			ret.resolve(self.latestGameId);
 		});	
 		return ret;
@@ -39,47 +50,67 @@
 	};
 
 	Api.prototype.getKillsByFlag = function() {		
-		return getCountByField('playerkilled', 'argument');
+		return getCountByField('playerkilled', 'argument', function(val) {			
+			return {
+				label: val['_id']['label'],
+				count: mode === 'weighted' ? val.count / flagsCount : val.count
+			};		
+		});
 	};
 
 	Api.prototype.getShotsByPlayer = function() {		
 		return getCountByField('shotfired', 'player');
 	};
 
-	var getCountByField = function(variable, field) {
+	var countGames = function() {
 		var command = {
 			"aggregate": "events",
 			"pipeline": [
-				{
-					$match: {
-						"@type": variable
-					}
-				},
-				{
-					$group: {
-						_id: {
-							"label": "$@" + field
-						}, 
-						count: {
-							$sum: 1
-						}
-					}
-				}
+				{$match: {"@type": 'playerjoin'}}, 
+				{"$group": {"_id": "$@player", "count": {"$sum": 1}}}
+			]
+		};
+		var ret = $.Deferred();
+		executePost('/games', command).done(function(resp) {
+
+			console.log(resp);	
+			$.each(resp.result, function(index, val) {
+				gamesCount[val['_id']] = val.count;
+			});			
+			ret.resolve();
+		});
+		return ret;
+	};
+
+	var getCountByField = function(variable, field, transform) {
+		var command = {
+			"aggregate": "events",
+			"pipeline": [
+				{$match: {"@type": variable}}, 
+				{$group: {_id: {"label": "$@" + field}, count: {$sum: 1}}},
+				{$sort: {count: -1}}
 			]
 		};
 
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} 	
+
+		if(!transform) {
+			transform = function(val) {
+				return {
+					label: val['_id']['label'],
+					count: mode === 'weighted' ? val.count / gamesCount[val['_id']['label']] : val.count
+				};
+			};
 		}
-	
+				
 		var ret = $.Deferred();
 		executePost('/events', command).done(function(resp) {
-			var result = [];
+			console.log(resp);
+			var result = [];				
 			$.each(resp.result, function(index, val) {								
-				result.push({
-					label: val['_id']['label'],
-					count: val.count
-				});
+				result.push(transform(val));
 			});
 			ret.resolve(result);
 		});
@@ -91,20 +122,10 @@
 		var command = {
 			"aggregate": "events",
 			"pipeline": [
-				{
-					$match: {
-						"@type": 'playerkilled'
-					}
-				},
-				{
-					$group: {
-						_id: {
-							"killer": "$@target",
-							"killed": "$@player"
-						}, 
-						count: {
-							$sum: 1
-						}
+				{$match: {"@type": 'playerkilled'}},
+				{$group: {
+					_id: {"killer": "$@target","killed": "$@player"}, 
+					count: {$sum: 1}
 					}
 				},
 				{ $sort: { count: -1 } },
@@ -135,20 +156,10 @@
 		var command = {
 			"aggregate": "events",
 			"pipeline": [
-				{
-					$match: {
-						"@type": 'flaggrabbed'
-					}
-				},
-				{
-					$group: {
-						_id: {
-							"flag": "$@target",
-							"player": "$@player"
-						}, 
-						count: {
-							$sum: 1
-						}
+				{$match: {"@type": 'flaggrabbed',"@target":{$in:["L","GM","ST","SW","CL","G"]}}},
+				{$group: {
+					_id: {"flag": "$@target","player": "$@player"}, 
+					count: {$sum: 1}
 					}
 				},
 				{ $sort: { count: -1 } },

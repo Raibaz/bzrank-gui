@@ -3,7 +3,7 @@
 	var api = w.api;
 	w.drawCharts = function() {		
 		$('.chart').html('<img class="loader" src="img/ajax-loader.gif"/>');
-		api.getLatestGameId().then(drawCharts);		
+		api.init().then(drawCharts);		
 	};
 
 	var drawCharts = function() {
@@ -47,7 +47,7 @@
 
 	var drawFlagPickups = function(targetDiv) {		
 		api.getPickupsByPlayer().then(function(result) {			
-			drawChart('Column', targetDiv, 'Most picked up flags', ['Players', 'pickups'], result);
+			drawChart('Column', targetDiv, 'Most picked up flags (Useful flags only: L, GM, ST, CL, SW, G', ['Players', 'pickups'], result);
 		});
 	};
 
