@@ -1,0 +1,19 @@
+#commands {
+	float: left;
+	width: 100%;
+	margin: 5px;
+}
+
+.chart {
+	border: 1px solid #CCCCCC;
+	border-radius: 15px;
+	width: 410px;
+	height: 310px;
+	float: left;
+	margin: 5px;
+	padding: 5px;
+}
+
+.loader {
+	margin: 35% 0 0 45%;
+}
