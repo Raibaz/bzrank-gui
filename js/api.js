@@ -174,11 +174,15 @@
 		var ret = $.Deferred();
 		executePost('/events', command).done(function(resp) {
 			var result = [];			
-			$.each(resp.result, function(index, val) {								
-				result.push({
+			$.each(resp.result, function(index, val) {	
+				var cur = {
 					label: val['_id']['player'] + " - " + val['_id']['flag'],
 					count: val.count
-				});
+				};				
+				if(mode === 'weighted') {					
+					cur.count = cur.count / gamesCount[val['_id']['player']];
+				}			
+				result.push(cur);
 			});
 			ret.resolve(result);
 		});
@@ -194,7 +198,7 @@
 					_id: {"player": "$@player","type": "$@type"}, 
 					count: {$sum: 1}
 					}
-				},
+				},				
 				{$sort: {"_id.type": -1}},
 				{$group: {_id: {"player": "$_id.player"}, counts: {$push: "$count"}}}
 			]
