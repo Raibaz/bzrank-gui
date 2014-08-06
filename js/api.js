@@ -170,8 +170,7 @@
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		}
-		
-		
+				
 		var ret = $.Deferred();
 		executePost('/events', command).done(function(resp) {
 			var result = [];			
@@ -185,6 +184,40 @@
 		});
 		return ret;
 	};
+
+	Api.prototype.getShotEfficiency = function() {
+		var command = {
+			"aggregate": "events",
+			"pipeline": [
+				{$match: {"@type": {"$in": ['shotfired', 'playerkilled']}}},
+				{$group: {
+					_id: {"player": "$@player","type": "$@type"}, 
+					count: {$sum: 1}
+					}
+				},
+				{$sort: {"_id.type": -1}},
+				{$group: {_id: {"player": "$_id.player"}, counts: {$push: "$count"}}}
+			]
+		};
+
+		if(mode === 'latest') {
+			command.pipeline[0]['$match']['@game'] = latestGameId;
+		}
+
+		var ret = $.Deferred();
+		executePost('/events', command).done(function(resp) {	
+			var result = [];			
+			$.each(resp.result, function(index, val) {		
+				var cur = {					
+					label: val['_id']['player'],
+					count: (val.counts[1] / val.counts[0])
+				};				
+				result.push(cur);
+			});
+			ret.resolve(result);
+		});
+		return ret;
+	}
 
 	var executeGet = function(collection, command, params) {
 		var url = "http://" + mongoHost + ":" + mongoPort + "/bzrank" + collection + "/_" + command + '?' + $.param(params);

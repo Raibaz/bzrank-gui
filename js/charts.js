@@ -11,6 +11,7 @@
 		drawPassiveKills('passive-kills-chart');
 		drawFlags('flags-chart');
 		drawShots('shots-chart');
+		drawShotEfficiency('efficiency-chart');
 		drawNemeses('nemeses-chart');
 		drawFlagPickups('pickups-chart');
 	};
@@ -36,6 +37,12 @@
 	var drawShots = function(targetDiv) {		
 		api.getShotsByPlayer().then(function(result) {			
 			drawChart('Column', targetDiv, 'Shots count', ['Player', 'Shots'], result);
+		});
+	};
+
+	var drawShotEfficiency = function(targetDiv) {		
+		api.getShotEfficiency().then(function(result) {			
+			drawChart('Column', targetDiv, 'Shot Efficiency (Shots / Kills)', ['Player', 'Ratio'], result);
 		});
 	};
 
