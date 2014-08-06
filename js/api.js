@@ -1,6 +1,6 @@
 (function(w, $) {
 	
-	var mongoHost = "localhost";
+	var mongoHost = "10.65.221.102";
 	var mongoPort = 27080;
 	var mode = 'latest';
 	var latestGameId = -1;
@@ -42,11 +42,11 @@
 	};
 
 	Api.prototype.getKillsByPlayer = function() {		
-		return getCountByField('playerkilled', 'target');
+		return getCountByField('playerkilled', 'player');
 	};
 
 	Api.prototype.getPassiveKillsByPlayer = function() {		
-		return getCountByField('playerkilled', 'player');
+		return getCountByField('playerkilled', 'target');
 	};
 
 	Api.prototype.getKillsByFlag = function() {		
