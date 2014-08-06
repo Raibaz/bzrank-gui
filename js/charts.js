@@ -14,11 +14,18 @@
 		drawShotEfficiency('efficiency-chart');
 		drawNemeses('nemeses-chart');
 		drawFlagPickups('pickups-chart');
+		drawGamesPlayed('games-chart');
 	};
 
 	var drawKills = function(targetDiv) {	
 		api.getKillsByPlayer().then(function(result) {
 			drawChart('Column', targetDiv, 'Kills made', ['Player', 'Kills'], result);		
+		});	
+	};
+
+	var drawGamesPlayed = function(targetDiv) {	
+		api.getGamesPlayedByPlayer().then(function(result) {
+			drawChart('Column', targetDiv, 'Games played', ['Player', 'Games'], result);		
 		});	
 	};
 

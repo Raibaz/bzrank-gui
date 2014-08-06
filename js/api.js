@@ -47,6 +47,10 @@
 		return getCountByField('playerkilled', 'target');
 	};
 
+	Api.prototype.getGamesPlayedByPlayer = function() {		
+		return getCountByField('playerjoin', 'player');
+	};	
+
 	Api.prototype.getKillsByFlag = function() {		
 		return getCountByField('playerkilled', 'argument', function(val) {			
 			return {
