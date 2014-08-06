@@ -26,9 +26,7 @@
 	var getLatestGameId = function() {
 		var self = this;
 		var params = {
-			"sort" : {
-				"start": "-1"
-			},		
+			"sort" : '{"start":-1}',		
 			"limit" : 1
 		};
 
