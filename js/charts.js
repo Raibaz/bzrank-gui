@@ -7,6 +7,7 @@
 	};
 
 	var drawCharts = function() {
+		$('#gameTimestamp').html(api.getGameTimestamp());
 		drawKills('kills-chart');
 		drawPassiveKills('passive-kills-chart');
 		drawFlags('flags-chart');

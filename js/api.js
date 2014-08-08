@@ -4,6 +4,7 @@
 	var mongoPort = 27080;
 	var mode = 'latest';
 	var latestGameId = -1;
+	var secondLatestGameId = -1;
 	var gamesCount = {};
 	var flagsCount = 20 //There are 19 flags around + "no flag"
 
@@ -23,16 +24,27 @@
 		mode = newMode;
 	};
 
+	Api.prototype.getGameTimestamp = function() {
+		if(mode === 'latest') {
+			return new Date(latestGameId * 1000);
+		} else if(mode === 'second-latest') {
+			return new Date(secondLatestGameId * 1000);
+		} else {
+			return "";
+		}
+	}
+
 	var getLatestGameId = function() {
 		var self = this;
 		var params = {
 			"sort" : '{"start":-1}',		
-			"limit" : 1
+			"limit" : 2
 		};
 
 		var ret = $.Deferred();
 		executeGet('/games', 'find', params).done(function(resp) {					
-			latestGameId = resp.results[0].start;	
+			latestGameId = resp.results[0].start;
+			secondLatestGameId = resp.results[1].start;	
 
 			ret.resolve(self.latestGameId);
 		});	
@@ -73,9 +85,7 @@
 			]
 		};
 		var ret = $.Deferred();
-		executePost('/games', command).done(function(resp) {
-
-			console.log(resp);	
+		executePost('/games', command).done(function(resp) {			
 			$.each(resp.result, function(index, val) {
 				gamesCount[val['_id']] = val.count;
 			});			
@@ -96,7 +106,9 @@
 
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} 	
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		}
 
 		if(!transform) {
 			transform = function(val) {
@@ -137,6 +149,8 @@
 
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 		
 		
@@ -171,6 +185,8 @@
 
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 				
 		var ret = $.Deferred();
@@ -208,6 +224,8 @@
 
 		if(mode === 'latest') {
 			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 
 		var ret = $.Deferred();
