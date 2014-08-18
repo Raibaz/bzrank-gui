@@ -16,6 +16,7 @@
 		drawNemeses('nemeses-chart');
 		drawFlagPickups('pickups-chart');
 		drawGamesPlayed('games-chart');
+		drawFavoriteFlags('favflags-chart');
 	};
 
 	var drawKills = function(targetDiv) {	
@@ -57,6 +58,12 @@
 	var drawNemeses = function(targetDiv) {		
 		api.getNemeses().then(function(result) {			
 			drawChart('Column', targetDiv, 'Best nemeses', ['Players', 'Kills'], result);
+		});
+	};
+
+	var drawFavoriteFlags = function(targetDiv) {		
+		api.getFavoriteFlags().then(function(result) {			
+			drawChart('Column', targetDiv, 'Favorite flags', ['Players-flags', 'Kills'], result);
 		});
 	};
 

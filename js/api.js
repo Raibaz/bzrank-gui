@@ -1,6 +1,6 @@
 (function(w, $) {
 	
-	var mongoHost = "10.65.221.102";
+	var mongoHost = "localhost";//"10.65.221.102";
 	var mongoPort = 27080;
 	var mode = 'latest';
 	var latestGameId = -1;
@@ -44,7 +44,9 @@
 		var ret = $.Deferred();
 		executeGet('/games', 'find', params).done(function(resp) {					
 			latestGameId = resp.results[0].start;
-			secondLatestGameId = resp.results[1].start;	
+			if(resp.results.length > 1) {
+				secondLatestGameId = resp.results[1].start;	
+			}
 
 			ret.resolve(self.latestGameId);
 		});	
@@ -118,17 +120,8 @@
 				};
 			};
 		}
-				
-		var ret = $.Deferred();
-		executePost('/events', command).done(function(resp) {
-			console.log(resp);
-			var result = [];				
-			$.each(resp.result, function(index, val) {								
-				result.push(transform(val));
-			});
-			ret.resolve(result);
-		});
-		return ret;
+			
+		return runCommand(command, transform);		
 	};
 
 	Api.prototype.getNemeses = function() {
@@ -153,19 +146,42 @@
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 		
+		return runCommand(command, function(val) {
+			return {
+				label: val['_id']['killer'] + " vs. " + val['_id']['killed'],
+				count: val.count
+			};
+		});		
+	};
+
+	Api.prototype.getFavoriteFlags = function() {
+
+		var command = {
+			"aggregate": "events",
+			"pipeline": [
+				{$match: {"@type": 'playerkilled'}},
+				{$group: {
+					_id: {"killer": "$@player","flag": "$@argument"}, 
+					count: {$sum: 1}
+					}
+				},
+				{ $sort: { count: -1 } },
+				{ $limit: 10}
+			]
+		};
+
+		if(mode === 'latest') {
+			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		}
 		
-		var ret = $.Deferred();
-		executePost('/events', command).done(function(resp) {
-			var result = [];			
-			$.each(resp.result, function(index, val) {								
-				result.push({
-					label: val['_id']['killer'] + " vs. " + val['_id']['killed'],
-					count: val.count
-				});
-			});
-			ret.resolve(result);
-		});
-		return ret;
+		return runCommand(command, function(val) {
+			return {
+				label: val['_id']['killer'] + " - " + val['_id']['flag'],
+				count: val.count
+			};
+		});		
 	};
 
 	Api.prototype.getPickupsByPlayer = function() {
@@ -189,22 +205,17 @@
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 				
-		var ret = $.Deferred();
-		executePost('/events', command).done(function(resp) {
-			var result = [];			
-			$.each(resp.result, function(index, val) {	
-				var cur = {
-					label: val['_id']['player'] + " - " + val['_id']['flag'],
-					count: val.count
-				};				
-				if(mode === 'weighted') {					
-					cur.count = cur.count / gamesCount[val['_id']['player']];
-				}			
-				result.push(cur);
-			});
-			ret.resolve(result);
-		});
-		return ret;
+
+		return runCommand(command, function(val) {
+			var ret = {
+				label: val['_id']['player'] + " - " + val['_id']['flag'],
+				count: val.count
+			};				
+			if(mode === 'weighted') {					
+				ret.count = ret.count / gamesCount[val['_id']['player']];
+			}	
+			return ret;		
+		});					
 	};
 
 	Api.prototype.getShotEfficiency = function() {
@@ -228,20 +239,25 @@
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
 		}
 
+		return runCommand(command, function(val) {
+			return {					
+				label: val['_id']['player'],
+				count: (val.counts[1] / val.counts[0])
+			};						
+		});
+	};
+
+	var runCommand = function(command, resultTransformer) {
 		var ret = $.Deferred();
 		executePost('/events', command).done(function(resp) {	
 			var result = [];			
 			$.each(resp.result, function(index, val) {		
-				var cur = {					
-					label: val['_id']['player'],
-					count: (val.counts[1] / val.counts[0])
-				};				
-				result.push(cur);
+				result.push(resultTransformer(val));				
 			});
 			ret.resolve(result);
 		});
 		return ret;
-	}
+	};
 
 	var executeGet = function(collection, command, params) {
 		var url = "http://" + mongoHost + ":" + mongoPort + "/bzrank" + collection + "/_" + command + '?' + $.param(params);
