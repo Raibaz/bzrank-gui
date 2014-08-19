@@ -1,6 +1,6 @@
 (function(w, $) {
 	
-	var mongoHost = "localhost";//"10.65.221.102";
+	var mongoHost = window.config.mongoHost;
 	var mongoPort = 27080;
 	var mode = 'latest';
 	var latestGameId = -1;
