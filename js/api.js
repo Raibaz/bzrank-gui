@@ -30,6 +30,8 @@
 			return new Date(latestGameId * 1000);
 		} else if(mode === 'second-latest') {
 			return new Date(secondLatestGameId * 1000);
+		} else if(mode === 'third-latest') {
+			return new Date(thirdLatestGameId * 1000);
 		} else {
 			return "";
 		}
@@ -111,13 +113,7 @@
 			]
 		};
 
-		if(mode === 'latest') {
-			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} else if(mode === 'second-latest') {
-			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
-		} else if(mode === 'third-latest') {
-			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
-		}
+		command = addModeFilters(command);
 
 		if(!transform) {
 			transform = function(val) {
@@ -147,13 +143,7 @@
 			]
 		};
 
-		if(mode === 'latest') {
-			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} else if(mode === 'second-latest') {
-			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
-		} else if(mode === 'third-latest') {
-			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
-		}
+		command = addModeFilters(command);
 		
 		return runCommand(command, function(val) {
 			return {
@@ -179,13 +169,7 @@
 			]
 		};
 
-		if(mode === 'latest') {
-			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} else if(mode === 'second-latest') {
-			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
-		} else if(mode === 'third-latest') {
-			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
-		}
+		command = addModeFilters(command);
 		
 		return runCommand(command, function(val) {
 			return {
@@ -210,13 +194,7 @@
 			]
 		};
 
-		if(mode === 'latest') {
-			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} else if(mode === 'second-latest') {
-			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
-		} else if(mode === 'third-latest') {
-			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
-		}
+		command = addModeFilters(command);
 				
 
 		return runCommand(command, function(val) {
@@ -246,13 +224,7 @@
 			]
 		};
 
-		if(mode === 'latest') {
-			command.pipeline[0]['$match']['@game'] = latestGameId;
-		} else if(mode === 'second-latest') {
-			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
-		} else if(mode === 'third-latest') {
-			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
-		}
+		command = addModeFilters(command);		
 
 		return runCommand(command, function(val) {
 			return {					
@@ -261,6 +233,18 @@
 			};						
 		});
 	};
+
+	var addModeFilters = function(command) {
+		if(mode === 'latest') {
+			command.pipeline[0]['$match']['@game'] = latestGameId;
+		} else if(mode === 'second-latest') {
+			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
+		}
+
+		return command;
+	}
 
 	var runCommand = function(command, resultTransformer) {
 		var ret = $.Deferred();
