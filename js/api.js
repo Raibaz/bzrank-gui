@@ -5,6 +5,7 @@
 	var mode = 'latest';
 	var latestGameId = -1;
 	var secondLatestGameId = -1;
+	var thirdLatestGameId = -1;
 	var gamesCount = {};
 	var flagsCount = 20 //There are 19 flags around + "no flag"
 
@@ -38,7 +39,7 @@
 		var self = this;
 		var params = {
 			"sort" : '{"start":-1}',		
-			"limit" : 2
+			"limit" : 3
 		};
 
 		var ret = $.Deferred();
@@ -46,6 +47,10 @@
 			latestGameId = resp.results[0].start;
 			if(resp.results.length > 1) {
 				secondLatestGameId = resp.results[1].start;	
+			}
+
+			if(resp.results.length > 2) {
+				thirdLatestGameId = resp.results[2].start;	
 			}
 
 			ret.resolve(self.latestGameId);
@@ -110,6 +115,8 @@
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		} else if(mode === 'second-latest') {
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
 		}
 
 		if(!transform) {
@@ -144,6 +151,8 @@
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		} else if(mode === 'second-latest') {
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
 		}
 		
 		return runCommand(command, function(val) {
@@ -174,6 +183,8 @@
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		} else if(mode === 'second-latest') {
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
 		}
 		
 		return runCommand(command, function(val) {
@@ -203,6 +214,8 @@
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		} else if(mode === 'second-latest') {
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
 		}
 				
 
@@ -237,6 +250,8 @@
 			command.pipeline[0]['$match']['@game'] = latestGameId;
 		} else if(mode === 'second-latest') {
 			command.pipeline[0]['$match']['@game'] = secondLatestGameId;
+		} else if(mode === 'third-latest') {
+			command.pipeline[0]['$match']['@game'] = thirdLatestGameId;
 		}
 
 		return runCommand(command, function(val) {
