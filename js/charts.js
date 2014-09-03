@@ -1,95 +1,117 @@
-(function(w, $) {
+(function (w, $) {
 
-	var api = w.api;
-	w.drawCharts = function() {		
-		$('.chart').html('<img class="loader" src="img/ajax-loader.gif"/>');
-		api.init().then(drawCharts);		
-	};
+    var api = w.api;
+    w.drawCharts = function () {
+        $('.chart').html('<img class="loader" src="img/ajax-loader.gif"/>');
 
-	var drawCharts = function() {
-		$('#gameTimestamp').html(api.getGameTimestamp());
-		drawKills('kills-chart');
-		drawPassiveKills('passive-kills-chart');
-		drawFlags('flags-chart');
-		drawShots('shots-chart');
-		drawShotEfficiency('efficiency-chart');
-		drawNemeses('nemeses-chart');
-		drawFlagPickups('pickups-chart');
-		drawGamesPlayed('games-chart');
-		drawFavoriteFlags('favflags-chart');
-	};
+        api.init().then(function () {
+            $('#gameTimestamp').html(api.getGameTimestamp());
 
-	var drawKills = function(targetDiv) {	
-		api.getKillsByPlayer().then(function(result) {
-			drawChart('Column', targetDiv, 'Kills made', ['Player', 'Kills'], result);		
-		});	
-	};
+            for (var chartId in activeCharts) {
+                (function (id, data){
+                    api[ data['api'] ]().then(function (result) {
+                        drawChart(
+                            data['chartType'],
+                            id,
+                            data['title'],
+                            data['labels'],
+                            result
+                        );
+                    });
+                })(chartId, activeCharts[chartId]);
+            }
+        });
+    };
 
-	var drawGamesPlayed = function(targetDiv) {	
-		api.getGamesPlayedByPlayer().then(function(result) {
-			drawChart('Column', targetDiv, 'Games played', ['Player', 'Games'], result);		
-		});	
-	};
+    var activeCharts = {
+        "points-chart": {
+            api: 'getPointsByPlayer',
+            chartType: 'Column',
+            title: 'Points made',
+            labels: ['Player', 'Points']
+        },
+        "efficiency-chart": {
+            api: 'getShotEfficiency',
+            chartType: 'Column',
+            title: 'Shot Efficiency (Shots / Kills)',
+            labels: ['Player', 'Ratio']
+        },
+        "kills-chart": {
+            api: 'getKillsByPlayer',
+            chartType: 'Column',
+            title: 'Kills made',
+            labels: ['Player', 'Kills']
+        },
+        "passive-kills-chart": {
+            api: 'getPassiveKillsByPlayer',
+            chartType: 'Column',
+            title: 'Kills received',
+            labels: ['Player', 'Kills']
+        },
+        "nemeses-chart": {
+            api: 'getNemeses',
+            chartType: 'Column',
+            title: 'Best nemeses',
+            labels: ['Players', 'Kills']
+        },
+        "shots-chart": {
+            api: 'getShotsByPlayer',
+            chartType: 'Column',
+            title: 'Shots count',
+            labels: ['Player', 'Shots']
+        },
+        "favflags-chart": {
+            api: 'getFavoriteFlags',
+            chartType: 'Column',
+            title: 'Favorite flags',
+            labels: ['Players-flags', 'Kills']
+        },
+        "flags-chart": {
+            api: 'getKillsByFlag',
+            chartType: 'Pie',
+            title: 'Most effective flags',
+            labels: ['Flag', 'Kills']
+        },
+        "pickups-chart": {
+            api: 'getPickupsByPlayer',
+            chartType: 'Column',
+            title: 'Most picked up flags (Useful flags only: L, GM, ST, CL, SW, G',
+            labels: ['Players', 'pickups']
+        },
+        "games-chart": {
+            api: 'getGamesPlayedByPlayer',
+            chartType: 'Column',
+            title: 'Games played',
+            labels: ['Player', 'Games']
+        }
+    };
 
-	var drawPassiveKills = function(targetDiv) {	
-		api.getPassiveKillsByPlayer().then(function(result) {
-			drawChart('Column', targetDiv, 'Kills received', ['Player', 'Kills'], result);		
-		});	
-	};
 
-	var drawFlags = function(targetDiv) {		
-		api.getKillsByFlag().then(function(result) {			
-			drawChart('Pie', targetDiv, 'Most effective flags', ['Flag', 'Kills'], result);
-		});
-	};
+    /**
+     * @param chartType
+     * @param targetDiv
+     * @param title
+     * @param labels
+     * @param data
+     */
+    var drawChart = function (chartType, targetDiv, title, labels, data) {
+        var table = new google.visualization.DataTable();
+        table.addColumn('string', labels[0]);
+        table.addColumn('number', labels[1]);
+        $.each(data, function (index, val) {
+            table.addRow([val.label, val.count]);
+        });
 
-	var drawShots = function(targetDiv) {		
-		api.getShotsByPlayer().then(function(result) {			
-			drawChart('Column', targetDiv, 'Shots count', ['Player', 'Shots'], result);
-		});
-	};
+        var options = {
+            'title': title,
+            'width': 400,
+            'height': 300,
+            'is3D': true
+        };
 
-	var drawShotEfficiency = function(targetDiv) {		
-		api.getShotEfficiency().then(function(result) {			
-			drawChart('Column', targetDiv, 'Shot Efficiency (Shots / Kills)', ['Player', 'Ratio'], result);
-		});
-	};
-
-	var drawNemeses = function(targetDiv) {		
-		api.getNemeses().then(function(result) {			
-			drawChart('Column', targetDiv, 'Best nemeses', ['Players', 'Kills'], result);
-		});
-	};
-
-	var drawFavoriteFlags = function(targetDiv) {		
-		api.getFavoriteFlags().then(function(result) {			
-			drawChart('Column', targetDiv, 'Favorite flags', ['Players-flags', 'Kills'], result);
-		});
-	};
-
-	var drawFlagPickups = function(targetDiv) {		
-		api.getPickupsByPlayer().then(function(result) {			
-			drawChart('Column', targetDiv, 'Most picked up flags (Useful flags only: L, GM, ST, CL, SW, G', ['Players', 'pickups'], result);
-		});
-	};
-
-	var drawChart = function(chartType, targetDiv, title, labels, data) {
-		var table = new google.visualization.DataTable();
-		table.addColumn('string', labels[0]);
-		table.addColumn('number', labels[1]);
-		$.each(data, function(index, val) {
-			table.addRow([val.label, val.count]);
-		});
-
-		var options = {
-				'title': title,
-	            'width': 400,
-	            'height': 300,
-	        	'is3D': true};
-
-	  // Instantiate and draw our chart, passing in some options.
-	  var chartConstructor = chartType + 'Chart';	  	  
-	  var chart = new w.google.visualization[chartConstructor](document.getElementById(targetDiv));
-	  chart.draw(table, options);
-	}
+        // Instantiate and draw our chart, passing in some options.
+        var chartConstructor = chartType + 'Chart';
+        var chart = new w.google.visualization[chartConstructor](document.getElementById(targetDiv));
+        chart.draw(table, options);
+    }
 })(window, jQuery);
