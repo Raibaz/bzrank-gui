@@ -8,6 +8,7 @@
     var thirdLatestGameId = -1;
     var gamesCount = {};
     var flagsCount = 20; //There are 19 flags around + "no flag"
+    var noFlagLabel = "no flag";
 
 
     var Api = function () {
@@ -83,7 +84,7 @@
                 var playerId = val['_id']['player'];
                 var score = ( val['_id']['target'] == 'l' ? -1 : 1 ) * parseInt(val['score']);
 
-                if ( scores[playerId] === undefined ){
+                if (scores[playerId] === undefined) {
                     scores[playerId] = score;
                 } else {
                     scores[playerId] = scores[playerId] + score;
@@ -94,15 +95,7 @@
                 }
             });
 
-            result.sort(function (a,b) {
-                if (a['count'] < b['count'])
-                    return 1;
-                if (a['count'] > b['count'])
-                    return -1;
-                return 0;
-            });
-
-            ret.resolve(result);
+            ret.resolve(sortBy(result, 'count', true));
         });
 
         return ret;
@@ -124,7 +117,7 @@
     Api.prototype.getKillsByFlag = function () {
         return getCountByField('playerkilled', 'argument', function (val) {
             return {
-                label: val['_id']['label'],
+                label: val['_id']['label'] || noFlagLabel,
                 count: mode === 'weighted' ? val.count / flagsCount : val.count
             };
         });
@@ -222,7 +215,7 @@
 
         return runCommand(command, function (val) {
             return {
-                label: val['_id']['killer'] + " - " + val['_id']['flag'],
+                label: val['_id']['killer'] + " - " + (val['_id']['flag'] || noFlagLabel),
                 count: val.count
             };
         });
@@ -281,6 +274,24 @@
                 count: (val.counts[1] / val.counts[0])
             };
         });
+    };
+
+
+    var sortBy = function (result, field, desc) {
+
+        desc = (desc || false) ? -1 : 1;
+
+        result.sort(function (a, b) {
+            if (a[field] < b[field]) {
+                return desc * -1;
+            } else if (a[field] > b[field]) {
+                return desc * 1;
+            } else {
+                return desc * 0;
+            }
+        });
+
+        return result;
     };
 
     var addModeFilters = function (command) {
